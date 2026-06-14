@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package analyzer;
+
+option go_package = "github.com/codediffanalyzer/proto/analyzerpb";
+
+// AST 节点类型枚举
+enum NodeType {
+  NODE_TYPE_UNSPECIFIED = 0;
+  NODE_TYPE_FUNCTION    = 1;
+  NODE_TYPE_CLASS       = 2;
+  NODE_TYPE_VARIABLE    = 3;
+  NODE_TYPE_STATEMENT   = 4;
+  NODE_TYPE_EXPRESSION  = 5;
+  NODE_TYPE_BLOCK       = 6;
+  NODE_TYPE_PARAMETER   = 7;
+  NODE_TYPE_IMPORT      = 8;
+  NODE_TYPE_COMMENT     = 9;
+}
+
+// AST 单个节点
+message ASTNode {
+  int32    id        = 1;  // 节点唯一标识
+  NodeType type      = 2;  // 节点类型
+  string   label     = 3;  // 节点名称（如函数名、变量名）
+  int32    start_line = 4; // 源码起始行
+  int32    end_line   = 5; // 源码结束行
+  repeated int32 children = 6; // 子节点 ID 列表
+}
+
+// 完整 AST 数据（一个文件版本对应一棵树）
+message ASTTree {
+  string           file_path = 1; // 文件路径
+  string           commit_id = 2; // Git commit SHA
+  repeated ASTNode nodes     = 3; // 所有节点（扁平化）
+  int32            root_id   = 4; // 根节点 ID
+}
+
+// 分析请求：指定仓库路径、文件、新旧 commit
+message AnalyzeRequest {
+  string repo_path  = 1;
+  string file_path  = 2;
+  string old_commit = 3;
+  string new_commit = 4;
+}
+
+// 语义变更类型
+enum ChangeType {
+  CHANGE_TYPE_UNSPECIFIED       = 0;
+  CHANGE_TYPE_RENAME            = 1; // 变量/函数重命名
+  CHANGE_TYPE_EXTRACT_FUNCTION  = 2; // 函数提取
+  CHANGE_TYPE_CONTROL_FLOW      = 3; // 控制流重构
+  CHANGE_TYPE_ADD               = 4; // 新增节点
+  CHANGE_TYPE_DELETE            = 5; // 删除节点
+  CHANGE_TYPE_MOVE              = 6; // 节点移动
+}
+
+// 单条语义差异
+message SemanticDiff {
+  ChangeType change_type  = 1;
+  string     description  = 2; // 可读描述
+  ASTNode    old_node     = 3; // 变更前节点（删除/修改时有值）
+  ASTNode    new_node     = 4; // 变更后节点（新增/修改时有值）
+  float      confidence   = 5; // 置信度 [0.0, 1.0]
+}
+
+// 社区（强耦合模块）
+message Community {
+  int32           id       = 1;
+  repeated string members  = 2; // 函数/类名列表
+  float           cohesion = 3; // 内聚度
+}
+
+// 分析结果
+message AnalyzeResult {
+  repeated SemanticDiff diffs       = 1;
+  repeated Community   communities = 2;
+  float                edit_distance = 3; // 树编辑距离
+}
+
+// 流式进度事件
+message ProgressEvent {
+  string stage   = 1; // 当前阶段名
+  int32  percent = 2; // 进度百分比 [0, 100]
+  string message = 3; // 可读消息
+}
+
+// ---- 服务定义 ----
+
+// Go -> Python：将 AST 数据推送至 Python 进行分析
+service ASTAnalyzer {
+  // 流式发送 AST 数据对，Python 返回分析结果
+  rpc AnalyzeAST (stream ASTTree) returns (AnalyzeResult);
+
+  // 订阅分析进度（Server-Side Streaming）
+  rpc StreamProgress (AnalyzeRequest) returns (stream ProgressEvent);
+}

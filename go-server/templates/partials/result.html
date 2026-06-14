@@ -1,0 +1,70 @@
+{{define "result"}}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <!-- 统计信息 -->
+    <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-medium text-gray-900">分析完成</h3>
+            <p class="text-sm text-gray-500 mt-1">树编辑距离: <span class="font-semibold text-gray-700">{{printf "%.2f" .EditDistance}}</span></p>
+        </div>
+        <div class="flex space-x-4">
+            <div class="text-center">
+                <span class="block text-2xl font-bold text-red-500">{{.DiffCount}}</span>
+                <span class="text-xs text-gray-500 uppercase tracking-wider">语义变更</span>
+            </div>
+            <div class="text-center">
+                <span class="block text-2xl font-bold text-blue-500">{{.CommunityCount}}</span>
+                <span class="text-xs text-gray-500 uppercase tracking-wider">耦合模块</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细变更列表与连线图 -->
+    <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- 左侧：语义变更列表 -->
+        <div class="lg:col-span-1 space-y-4 max-h-[600px] overflow-y-auto pr-2">
+            <h4 class="font-medium text-gray-800 border-b pb-2 mb-3">检测到的重构</h4>
+            {{range .Diffs}}
+            <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        {{if eq .ChangeType "RENAME"}}bg-yellow-100 text-yellow-800
+                        {{else if eq .ChangeType "EXTRACT_FUNCTION"}}bg-purple-100 text-purple-800
+                        {{else if eq .ChangeType "ADD"}}bg-green-100 text-green-800
+                        {{else if eq .ChangeType "DELETE"}}bg-red-100 text-red-800
+                        {{else}}bg-gray-100 text-gray-800{{end}}">
+                        {{.ChangeType}}
+                    </span>
+                    <span class="text-xs text-gray-400">置信度: {{printf "%.0f%%" (mul .Confidence 100.0)}}</span>
+                </div>
+                <p class="text-sm text-gray-700">{{.Description}}</p>
+                <div class="mt-3 text-xs font-mono text-gray-500 bg-gray-50 p-2 rounded">
+                    {{if .OldLabel}}<div class="text-red-600">- {{.OldLabel}}</div>{{end}}
+                    {{if .NewLabel}}<div class="text-green-600">+ {{.NewLabel}}</div>{{end}}
+                </div>
+            </div>
+            {{else}}
+            <div class="text-sm text-gray-500 italic">未检测到结构性变更。</div>
+            {{end}}
+        </div>
+
+        <!-- 右侧：AST 可视化 -->
+        <div class="lg:col-span-2 relative">
+            <h4 class="font-medium text-gray-800 border-b pb-2 mb-3">AST 语义拓扑</h4>
+            <!-- 画布，依赖 Vanilla JS (canvas.js) 渲染连线 -->
+            <div class="relative w-full aspect-video bg-gray-50 rounded-lg border border-gray-200 overflow-hidden" id="ast-canvas-container" data-graph='{{.GraphJSON}}'>
+                <canvas id="astCanvas" class="absolute inset-0 w-full h-full"></canvas>
+                <!-- 这里可以用 HTML 绝对定位渲染节点，Canvas 只画线 -->
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- 触发 Canvas 重新绘制 -->
+<script>
+    if (typeof window.drawASTGraph === 'function') {
+        window.drawASTGraph();
+    }
+</script>
+{{end}}

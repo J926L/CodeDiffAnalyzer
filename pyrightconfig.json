@@ -1,0 +1,17 @@
+{
+  "typeCheckingMode": "strict",
+  "venvPath": "python-engine",
+  "venv": ".venv",
+  "executionEnvironments": [
+    {
+      "root": "python-engine"
+    }
+  ],
+  "extraPaths": [
+    "python-engine"
+  ],
+  "ignore": [
+    "python-engine/core/*_pb2.py",
+    "python-engine/core/*_pb2_grpc.py"
+  ]
+}

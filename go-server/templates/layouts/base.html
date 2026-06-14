@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeDiffAnalyzer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#4f46e5',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- htmx -->
+    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
+    <!-- SSE Extension -->
+    <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+    <style>
+        canvas { border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #fafafa; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans antialiased">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {{block "content" .}}{{end}}
+    </div>
+    
+    <!-- 基础脚本，如 Canvas 绘图等 -->
+    <script src="/static/js/canvas.js"></script>
+</body>
+</html>
